@@ -1,19 +1,15 @@
 import sys
 import logging
-import manatoki_cli as CLI
+import manatoki_cli as toki
 import tistory_cli as tistory
 import dc_cli as dc
 import subprocess
-# from multiprocessing import Process
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, \
      QMainWindow, QAction, qApp, QLabel, \
      QFormLayout, QLineEdit, \
      QGridLayout, QTextEdit, QCheckBox, \
      QPlainTextEdit, QProgressBar
-# from PyQt5.QtWidgets import *
-# from PyQt5.QtCore import *
-# from PyQt5.QtGui import *
 
 
 class QTextEditLogger(logging.Handler):
@@ -105,10 +101,10 @@ class MyApp(QMainWindow, QPlainTextEdit):
         logging.getLogger().setLevel(logging.DEBUG)
 
         # 메인윈도우에 중앙 위젯을 생성, 그리드 레이아웃 사용
-        self.central_widget = QWidget()               # define central widget
-        self.setCentralWidget(self.central_widget)    # set QMainWindow.centralWidget
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
         grid = QGridLayout()
-        self.centralWidget().setLayout(grid)          # add the layout to the central widget
+        self.centralWidget().setLayout(grid)
 
         # 입력 및 실행 위젯 생성
         self.stack1 = QWidget()
@@ -151,11 +147,11 @@ class MyApp(QMainWindow, QPlainTextEdit):
         self.check_box = QCheckBox('게시글 안에 링크 목록을 다운', self)
         label = QLabel()
         label4 = QLabel(
-                        '※ 저장 폴더는 현재 실행파일이 위치한 폴더' + '\n\n' +
-                        '1. 마나토끼와 티스토리는 만화 제목별 폴더 자동 생성: ' + '\n' +
-                        '   각 화 폴더는 제목별 폴더 아래에 저장' + '\n\n' +
-                        '2. 디시 이미지를 특정 제목 폴더 안에 넣고 싶은 경우:' + '\n' + 
-                        '   저장폴더에 폴더이름 입력 (폴더 자동생성)'
+            '※ 저장 폴더는 현재 실행파일이 위치한 폴더' + '\n\n' +
+            '1. 마나토끼와 티스토리는 만화 제목별 폴더 자동 생성: ' + '\n' +
+            '   각 화 폴더는 제목별 폴더 아래에 저장' + '\n\n' +
+            '2. 디시 이미지를 특정 제목 폴더 안에 넣고 싶은 경우:' + '\n' +
+            '   저장폴더에 폴더이름 입력 (폴더 자동생성)'
                         )
 
         layout.addRow("주소", self.url)
@@ -171,21 +167,22 @@ class MyApp(QMainWindow, QPlainTextEdit):
         layout = QFormLayout()
 
         label = QLabel()
-        label4 = QLabel('※ 지원 사이트: manatoki.net , tistory.com, dcinside.com' + '\n\n' +
-                        '1. 주소창에 다운받을 사이트의 주소를 입력' + '\n\n' +
-                        '   ・manatoki는 전편보기 주소입력시 전편 다운(한 화도 가능):' + '\n' +
-                        '   예) https://manatoki77.net/comic/*****' + '\n\n' +
-                        '   ・tistory는 카테고리 주소입력시 전편 다운(한 화도 가능): ' + '\n' +
-                        '   예) https://xxx.tistory.com/category/*****  (전편)' + '\n' +
-                        '   예) https://xxx.tistory.com/xxx  (한 화)' + '\n\n' +
-                        '   ・dcinside는 입력주소 안에 있는 이미지 다운: ' + '\n' +
-                        '   게시글안에 복수링크가 있는 경우 디시링크 포함 체크시 전체 다운' + '\n' +
-                        '   예) https://gall.dcinside.com/board/view/?*****' + '\n\n' +
-                        '2. 실행 버튼 클릭: Download' + '\n\n' +
-                        '3. 완료 까지 대기: 상태 바 100% 녹색으로 변경' + '\n' +
-                        '   (프로세스 창이 응답 없음으로 표시되도 실제로는 기동중)' + '\n' +
-                        '   (콘솔창 실행 가능: Menubar - File - Console )' + '\n\n' +
-                        '4. 비밀번호는 티스토리 패스워드가 다를 경우만 입력후 실행: 기본 1111 설정'
+        label4 = QLabel(
+            '※ 지원 사이트: manatoki.net , tistory.com, dcinside.com' + '\n\n' +
+            '1. 주소창에 다운받을 사이트의 주소를 입력' + '\n\n' +
+            '   ・manatoki는 전편보기 주소입력시 전편 다운(한 화도 가능):' + '\n' +
+            '   예) https://manatoki77.net/comic/*****' + '\n\n' +
+            '   ・tistory는 카테고리 주소입력시 전편 다운(한 화도 가능): ' + '\n' +
+            '   예) https://xxx.tistory.com/category/*****  (전편)' + '\n' +
+            '   예) https://xxx.tistory.com/xxx  (한 화)' + '\n\n' +
+            '   ・dcinside는 입력주소 안에 있는 이미지 다운: ' + '\n' +
+            '   게시글안에 복수링크가 있는 경우 디시링크 포함 체크시 전체 다운' + '\n' +
+            '   예) https://gall.dcinside.com/board/view/?*****' + '\n\n' +
+            '2. 실행 버튼 클릭: Download' + '\n\n' +
+            '3. 완료 까지 대기: 상태 바 100% 녹색으로 변경' + '\n' +
+            '   (프로세스 창이 응답 없음으로 표시되도 실제로는 기동중)' + '\n' +
+            '   (콘솔창 실행 가능: Menubar - File - Console )' + '\n\n' +
+            '4. 비밀번호는 티스토리 패스워드가 다를 경우만 입력후 실행: 기본 1111 설정'
                         )
 
         layout.addRow("[사용법]", label)
@@ -224,7 +221,7 @@ class MyApp(QMainWindow, QPlainTextEdit):
 
         if 'manatoki' in url:
             # 마나토끼 다운로더 인스턴스 생성
-            obj = CLI.Downloader()
+            obj = toki.Downloader()
             obj.select_main(url)
             # try:
             #     obj.one_main(url)
@@ -277,13 +274,7 @@ class ExamplePopup(QWidget):
     def __init__(self, log):
         super().__init__()
 
-        # self.name = log
-
         self.setWindowTitle('Debug')
-
-        # lblName = QLabel(log, self)
-        # layout = QFormLayout()
-        # layout.addRow(lblName)
 
         grid = QGridLayout()
         self.setLayout(grid)
@@ -295,8 +286,6 @@ class ExamplePopup(QWidget):
         process.setLineWrapMode(QTextEdit.FixedPixelWidth)
         process.setReadOnly(True)
         process.setText(log)
-        # layout = QFormLayout()
-        # layout.addRow(process)
 
         grid.addWidget(process)
 

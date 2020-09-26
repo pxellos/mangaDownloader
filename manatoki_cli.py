@@ -2,14 +2,10 @@ import os
 import re
 import time
 import importlib
-import urllib
-# import requests
 from urllib import request
 from bs4 import BeautifulSoup
-# from requests import get
 from concurrent import futures
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 
 # 최대 프로세스 개수
 MAX_PROCESS = 10
@@ -117,38 +113,10 @@ class Downloader():
     # 각 화 이미지 추출 및 저장 메소드
     def image_parse(self, soup, path, img_list):
 
+        # 폴더 생성 및 제목 추출
         path = SELLECT_PATH + '\\' + path
-
-        # img_list = []
-        # # filename_dict = {}
-
-        # link = soup.find("p")
-        # class_num = link.get('class')
-        # parse_name = 'data-' + str(class_num[0])
-
-        # # 이미지 링크 주소 추출
-        # for link in soup.find_all("img"):
-        #     # 파일 주소
-        #     img = link.get(parse_name)
-        #     src = link.get("src")
-        #     # style = link.get("style")
-        #     # if (img) and (style is None):
-        #     if (img) and (src == "/img/loading-image.gif"):
-        #         img_list.append(img)
-        #     # # 파일명
-        #     # alt = link.get('alt')
-        #     # if img and alt:
-        #     #     img_list.append(img)
-        #     #     filename_dict[img] = alt
-
         locate, title = self.folder_name(soup, path)
 
-        # # 각 화 폴더가 존재하면 스킵
-        # if os.path.exists(locate):
-        #     print(locate + ' is exist')
-        #     return
-
-        # os.mkdir(locate)
         for num, img in enumerate(img_list, 1):
             extension = img.rsplit('.')
             length = len(extension)
@@ -272,9 +240,11 @@ class Downloader():
     def total_page(self):
         url = 'https://manatoki.net'
 
+        # 헤더 정보가 없어서 접속 안될때 사용방법
         # req_url = request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         # response = request.urlopen(req_url)
         # html = response.read()
+
         get_obj = CreateRequests()
         res = get_obj.get(url)
         html = res.text
@@ -430,6 +400,7 @@ class Downloader():
 
     #     return data
 
+    # 한 화 저장 메소드
     def zero_main(self, url):
 
         # url = 'https://manatoki76.net/comic/5495612'
@@ -463,24 +434,7 @@ class Downloader():
             print('에러가 발생하였습니다. 로그를 확인하세요.')
             return
 
-        # 만화 제목 검색
-        # link = soup.find('div', {"class": 'toon-title'})
-        # title = link.get_text()
-        # title_split = title.rsplit('화', maxsplit=1)
-        # _title_split = title_split[0].rsplit(' ', maxsplit=1)
-        # __title_split = _title_split[0]
-
-        # folder_key = list(folder_dict.keys())
-        # # print(folder_key)
-        # for i, folder in enumerate(folder_key, 0):
-        #     _folder = folder.rsplit(']', maxsplit=1)
-        #     if len(_folder) > 1:
-        #         __folder = _folder[1].strip()
-        #         print(__folder)
-        #         if __title_split == __folder:
-        #             path = folder_key[i]
-        #             print(path)
-
+    # 1개 만화 전체 저장 메소드
     def one_main(self, url):
 
         # url = 'https://manatoki102.net/comic/5374287'
@@ -523,34 +477,7 @@ class Downloader():
         with futures.ThreadPoolExecutor(workers) as executor:
             executor.map(self._multi_threading, page_tuple_list)
 
-        # # 쓰레딩간 정보공유를 위해 큐를 생성해 아이템 입력
-        # queue = Queue()
-        # for page in page_list:
-        #     queue.put(page)
-
-        # # 5개의 쓰레드를 생성해서 작업 수행
-        # try:
-        #     th1 = Thread(target=_multi_threading, args=(1, queue, folder))
-        #     th2 = Thread(target=_multi_threading, args=(2, queue, folder))
-        #     th3 = Thread(target=_multi_threading, args=(3, queue, folder))
-        #     th4 = Thread(target=_multi_threading, args=(4, queue, folder))
-        #     th5 = Thread(target=_multi_threading, args=(5, queue, folder))
-
-        #     th1.start()
-        #     th2.start()
-        #     th3.start()
-        #     th4.start()
-        #     th5.start()
-
-        #     th1.join()
-        #     th2.join()
-        #     th3.join()
-        #     th4.join()
-        #     th5.join()
-        # except Exception as e:
-        #     print(e)
-        #     return
-
+    # 마나토끼의 업로드 된 전체만화를 백업
     def two_main(self):
 
         # 전체 리스트 파싱
@@ -577,12 +504,14 @@ class Downloader():
             futers = executor.map(self._multi_process, page_list)
             print(futers)
 
+    # 전체 백업중 업데이트 된 부분만 갱신
     def three_main(self):
         print('미완성 작업중')
         # data = total_parse_json()
         # print(data)
         pass
 
+    # 입력된 주소로 한화 인지 1개 만화인지 판별해서 수행
     def select_main(self, url):
         soup, img_list = self.manatoki_parse(url)
         # print(img_list)
@@ -616,6 +545,7 @@ class Downloader():
             self.one_main(url)
 
 
+# Console로 실행했을 때 사용하는 메소드
 def main():
     global SELLECT_PATH
 

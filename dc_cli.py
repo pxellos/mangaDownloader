@@ -24,7 +24,7 @@ class Downloader():
         path = CURRENT_PATH
 
         chromeOptions = webdriver.ChromeOptions()
-        # 창없는 모드로 실행
+        # 창없는 모드로 실행, 봇 차단 방지위해 에어전트 정보 설정
         chromeOptions.add_argument('headless')
         chromeOptions.add_argument("disable-gpu")
         chromeOptions.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
@@ -45,11 +45,9 @@ class Downloader():
         html = driver.page_source
         soup = BeautifulSoup(html, 'html.parser')
 
-        # 이미지 링크 추출
+        # 이미지 링크 추출, 디시는 실제 이미지를 별개의 도메인에 저장(이하는 동일)
         img_list = []
         img_list_pop = []
-        # for link in soup.find_all('img'):
-        #     href = link.get('alt')
         for link in soup.find_all('img', {'class': 'txc-image'}):
             href = link.get('src')
             temp = str(href)
@@ -73,6 +71,7 @@ class Downloader():
         # 드라이버 종료
         driver.quit()
 
+    # 게시글 하나에서만 이미지 다운
     def one_main(self, url):
         # url = 'https://gall.dcinside.com/board/view/?id=keion&no=181231'
         path = SELLECT_PATH
@@ -98,6 +97,7 @@ class Downloader():
 
         self.crome_download(url, folder)
 
+    # 게시글에 포함된 링크 전체의 이미지 다운
     def two_main(self, url):
         # url = 'https://gall.dcinside.com/mgallery/board/view/?id=keionshuffle&no=11'
 
@@ -120,9 +120,12 @@ class Downloader():
         with futures.ThreadPoolExecutor(workers) as executor:
             executor.map(self.one_main, page_list)
 
+    # 저장폴더 변경 메소드
     def change_folder(self, forlder):
 
         global SELLECT_PATH
+        # 디폴트 폴더 변경시 이하로 수정
+        # SELLECT_PATH = CURRENT_PATH + '\\' + forlder
         SELLECT_PATH = 'D:\\Manatoki' + '\\' + forlder
         if not os.path.exists(SELLECT_PATH):
             os.mkdir(SELLECT_PATH)
@@ -133,13 +136,6 @@ class Downloader():
         response = request.urlopen(req_url)
         html = response.read()
         soup = BeautifulSoup(html, 'html.parser')
-
-        # page = str(soup).split("('", 1)[1].rsplit("')", 1)[0]
-        # page_url = 'https://gall.dcinside.com' + page
-        # req_url = request.Request(page_url, headers={'User-Agent': 'Mozilla/6.0'})
-        # response = request.urlopen(req_url)
-        # html = response.read()
-        # soup_page = BeautifulSoup(html, 'html.parser')
 
         return soup
 

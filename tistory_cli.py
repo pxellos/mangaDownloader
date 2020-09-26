@@ -56,21 +56,28 @@ class Downloader():
         # name = 'entry' + num[len(num) - 1] + 'password'
         # driver.find_element_by_name(name).send_keys('1111')
 
-        # 패스워드를 입력할 경우에 변경
+        # 패스워드를 입력
         # driver.find_element_by_tag_name('input').send_keys('1111')
-        driver.find_element_by_xpath("//input[@type='password']").send_keys(PASSWORD)   # password: 1111
+        driver.find_element_by_xpath(
+            "//input[@type='password']").send_keys(PASSWORD)
+
+        # 확인 버튼을 클릭, 경로가 다른경우가 있어서 예외처리로 수행
         try:
             driver.find_element_by_xpath('//button[@type="submit"]').click()
         except Exception:
-            driver.find_element_by_xpath('/html/body/div/div/main/div/div/div/div/div/form/button[@type="submit"]').click()
+            submit_path = '/html/body/div/div/main/div/div/div/div/div/form/button[@type="submit"]'
+            driver.find_element_by_xpath(submit_path).click()
 
+        # 패스워드 입력후 글이 보여지면 정보 취득
         html = driver.page_source
-        driver.quit()
         soup = BeautifulSoup(html, 'html.parser')
+
+        # 드라이버 종료
+        driver.quit()
 
         return soup
 
-    # 도메인 추출 메소드
+    # 도메인 추출 메소드, 카테고리에서 각 링크는 뒤에 번호만 나오기 때문에 필요
     def domain_parse(self, url):
 
         spl_str = '.com'
@@ -95,6 +102,7 @@ class Downloader():
         if 'page=' not in url:
             url = url + '?page=1'
 
+        # 링크가 중복되는 경우 있어서 set객체로 저장
         page_set = set()
         page_set.add(url)
 
@@ -133,6 +141,8 @@ class Downloader():
                 # print(temp_name)
                 link_set.add(temp_name)
 
+        # set에 정보가 없으면 패스워드 입력란이 있음
+        # 따라서 크롬드라이버로 파싱 수행하게 모드 설정
         if not link_set:
             mode = 1
             for link in soup_list:
@@ -149,7 +159,6 @@ class Downloader():
     def image_parse(self, soup, path):
 
         title = ''
-
         try:
             for link in soup.find('a', {"class": 'link_title'}):
                 title = link.get_text()
@@ -208,35 +217,7 @@ class Downloader():
 
         return soup
 
-    # def _multi(self, id, queue, mode):
-
-    #     while True:
-    #         try:
-    #             link = queue.get_nowait()
-    #         except Exception:
-    #             break
-
-    #         # 비밀번호 설정된 경우
-    #         if mode == 1:
-    #             print(link)
-    #             # 셀레티움으로 링크 주소에서 다운받을 이미지 주소 파싱
-    #             soup = self.crome_parse(link)
-    #             try:
-    #                 # 이미지 다운로드 실행
-    #                 self.image_parse(soup)
-    #             except Exception as e:
-    #                 print(e)
-    #         else:
-    #             # 비밀번호 없는 경우
-    #             print(link)
-    #             # 리퀘스츠로 링크 주소에서 다운받을 이미지 주소 파싱
-    #             soup = self._parse(link)
-    #             try:
-    #                 # 이미지 다운로드 실행
-    #                 self.image_parse(soup)
-    #             except Exception as e:
-    #                 print(e)
-
+    # 멀티 쓰레딩으로 각화 다운
     def _multi_threading(self, page_tuple):
 
         link = page_tuple[0]
@@ -253,8 +234,7 @@ class Downloader():
             except Exception as e:
                 print(e)
         else:
-            # 비밀번호 없는 경우
-            # 리퀘스츠로 링크 주소에서 다운받을 이미지 주소 파싱
+            # 비밀번호 없는 경우는 requests사용 (빠름)
             soup = self._parse(link)
             try:
                 # 이미지 다운로드 실행
@@ -262,6 +242,7 @@ class Downloader():
             except Exception as e:
                 print(e)
 
+    # 카테고리 통해 전체 다운
     def main(self, url):
         path = SELLECT_PATH
 
@@ -290,15 +271,16 @@ class Downloader():
             with futures.ThreadPoolExecutor(workers) as executor:
                 executor.map(self._multi_threading, page_tuple_list)
 
+    # 해당 게시글 한화만 다운
     def one_main(self, url):
 
         path = SELLECT_PATH
         soup = self._parse(url)
 
-        # 비밀번호 없는 경우
+        # 비밀번호 없는 경우, 있는 경우는 예외처리로 수행
         try:
             # 이미지 다운로드 실행
-            self.image_parse(soup)
+            self.image_parse(soup, path)
         except Exception:
             # 비밀번호 설정된 경우
             # 셀레티움으로 링크 주소에서 다운받을 이미지 주소 파싱
@@ -309,6 +291,7 @@ class Downloader():
             except Exception as e:
                 print(e)
 
+    # 비밀글 입력 패스워드 변경 메소드 (gui에서 사용)
     def change_password(self, password):
         global PASSWORD
         PASSWORD = password
