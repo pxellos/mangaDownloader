@@ -34,6 +34,14 @@ class Downloader():
                 response = get(url)                 # get request
                 file.write(response.content)        # write to file
 
+        # 파일 크기가 100KB 미만이면 삭제
+        file_size = os.path.getsize(locate)
+        if file_size < 100000:
+            os.remove(locate)
+            return False
+
+        return True
+
     # 크롬드라이버로 파싱
     def crome_parse(self, url):
 
@@ -158,6 +166,7 @@ class Downloader():
     # 각 화 이미지 추출 및 저장 메소드
     def image_parse(self, soup, path):
 
+        ret = False
         title = ''
         try:
             for link in soup.find('a', {"class": 'link_title'}):
@@ -176,6 +185,10 @@ class Downloader():
             img_list.append(link.get('src'))
             filename_dict[link.get('src')] = link.get('filename')
 
+        # 패스워드 있어서 이미지 없을시 예외발생해서 크롬다운로드 실행
+        if len(img_list) < 2:
+            raise Exception
+
         locate = path + '\\' + title
 
         if not os.path.exists(locate):
@@ -183,6 +196,7 @@ class Downloader():
             print(title)
         else:
             print(title + ' is exist')
+            return
 
         for num, img in enumerate(img_list, 1):
             # print('img: ' + img)
@@ -199,15 +213,16 @@ class Downloader():
                 else:
                     number = '%03d' % num
                     img_name = str(number) + '.' + img_extension[0]
-                    self.download(img, img_name, locate)
+                    ret = self.download(img, img_name, locate)
             else:
                 # 링크에 확장자가 없는 경우 파일이름 엘리먼츠로 작성
                 img_name = filename_dict.get(img)
                 # print('img_name: ' + img_name)
                 if not img_name:
-                    self.download(img, img_name, locate)
+                    ret = self.download(img, img_name, locate)
 
-            print(title + ' ' + img_name + ' is downloaded')
+            if ret:
+                print(title + ' ' + img_name + ' is downloaded')
 
     # soup 웹 파싱 메소드
     def _parse(self, web_url):
@@ -301,6 +316,9 @@ if __name__ == "__main__":
     while True:
         print("*"*70)
         print("정보를 수집할 티스토리 주소를 입력하세요.")
+        print("1. 한화 주소")
+        print("2. 카테고리 주소(전체)")
+        print("q를 입력하면 종료 합니다.")
         print("*"*70)
 
         # url = 'https://garbage6974.tistory.com/category/%EA%B2%BD%EB%85%80?page=1'
@@ -308,10 +326,19 @@ if __name__ == "__main__":
 
         print("입력: ")
         cli_input = input()
+        obj = Downloader()
 
         try:
-            obj = Downloader()
-            obj.main(cli_input)
+            if cli_input == 'q':
+                os._exit(0)
+            elif cli_input == '1':
+                print("다운받을 주소를 입력하세요.")
+                url = input()
+                obj.one_main(url)
+            else:
+                print("다운받을 주소를 입력하세요.")
+                url = input()
+                obj.main(cli_input)
         except Exception as e:
             print('[Error]: ' + str(e))
             print('다운로드 받을 주소는 페이지 번호가 표시되어 있는 주소를 입력하세요.')

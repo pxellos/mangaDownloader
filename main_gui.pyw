@@ -43,7 +43,7 @@ class MyApp(QMainWindow, QPlainTextEdit):
         self.setWindowIcon(QtGui.QIcon('web.png'))
         # self.move(400, 100)
         # self.resize(800, 600)
-        self.setGeometry(400, 100, 800, 600)
+        self.setGeometry(0, 100, 800, 600)
         self.show()
 
         self.initUI()

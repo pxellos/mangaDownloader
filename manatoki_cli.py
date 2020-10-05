@@ -401,12 +401,9 @@ class Downloader():
     #     return data
 
     # 한 화 저장 메소드
-    def zero_main(self, url):
+    def zero_main(self, soup, img_list):
 
         # url = 'https://manatoki76.net/comic/5495612'
-        # now_path = SELLECT_PATH
-
-        soup, img_list = self.manatoki_parse(url)
 
         # 전체목록 주소 추출
         # total_soup = self._parse(url)
@@ -426,13 +423,11 @@ class Downloader():
         else:
             os.mkdir(path_locate)
             print(title)
-
-        # 다운로드 실행
-        try:
-            self.image_parse(soup, path, img_list)
-        except Exception:
-            print('에러가 발생하였습니다. 로그를 확인하세요.')
-            return
+            # 다운로드 실행
+            try:
+                self.image_parse(soup, path, img_list)
+            except Exception:
+                print('에러가 발생하였습니다. 로그를 확인하세요.')
 
     # 1개 만화 전체 저장 메소드
     def one_main(self, url):
@@ -516,30 +511,7 @@ class Downloader():
         soup, img_list = self.manatoki_parse(url)
         # print(img_list)
         if img_list:
-            # 전체목록 주소 추출
-            total_url = self.total_list_parse(soup)
-            total_soup = self._parse(total_url)
-
-            # 작가명 폴더 생성
-            path = self.create_folder(total_soup)
-
-            # 한 화 폴더 생성
-            locate, title = self.folder_name(soup, path)
-            path_locate = SELLECT_PATH + '\\' + locate
-
-            # 한 화 폴더가 존재하면 스킵
-            if os.path.exists(path_locate):
-                print(title + ' is exist')
-            else:
-                os.mkdir(path_locate)
-                print(title)
-
-            # 다운로드 실행
-            try:
-                self.image_parse(soup, path, img_list)
-            except Exception:
-                print('에러가 발생하였습니다. 로그를 확인하세요.')
-                return
+            self.zero_main(soup, img_list)
         else:
             print('입력한 주소는 전편보기 주소입니다. 전편다운을 시작합니다.')
             self.one_main(url)
