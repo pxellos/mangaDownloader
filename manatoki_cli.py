@@ -9,7 +9,7 @@ from selenium import webdriver
 
 # 최대 프로세스 개수
 MAX_PROCESS = 10
-# 최대 쓰레드 개수
+# 최대 쓰레드 개수, 한화에 파일 개수가 많은 경우 다른 스레드에서 타임아웃 발생함에 따라 줄임
 MAX_THREAD = 10
 # 현재 폴더 경로
 CURRENT_PATH = os.getcwd()
@@ -136,13 +136,15 @@ class Downloader():
         link = soup.find('div', {"class": 'toon-title'})
         title = link.get_text()
         # title = soup.title.get_text()
-        title_split = title.rsplit('화', maxsplit=1)
+        # title_split = title.rsplit('화', maxsplit=1)
+        title_split = title.rsplit('(', maxsplit=1)
 
         # 폴더 생성이 실패하는 특수문자 제거
         title_re = re.sub(
             '[\\/:*\?\"<>|]', '？', title_split[0])
         title_strip = title_re.strip()
-        locate = path + '\\' + title_strip + '화'
+        # locate = path + '\\' + title_strip + '화'
+        locate = path + '\\' + title_strip
 
         return locate, title
 

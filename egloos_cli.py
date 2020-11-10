@@ -1,5 +1,7 @@
 import os
 import re
+import manatoki_cli as cli
+import dc_cli as dc
 from urllib import request
 from bs4 import BeautifulSoup
 from requests import get
@@ -11,7 +13,7 @@ from selenium import webdriver
 # 최대 프로세스 개수
 MAX_PROCESS = 10
 # 최대 쓰레드 개수, 한화에 파일 개수가 많은 경우 다른 스레드에서 타임아웃 발생함에 따라 줄임
-MAX_THREAD = 3
+MAX_THREAD = 10
 # 현재 폴더 경로
 CURRENT_PATH = os.getcwd()
 # 지정 경로
@@ -106,30 +108,64 @@ class Downloader():
         title_re = re.sub('[\\/:*\?\"<>|]', '？', title)
         title_strip = title_re.strip()
 
+        print(title_strip)
+
         # 페이지 번호 없을 경우 붙임
-        if 'page=' not in url:
-            url = url + '?page=1'
+        if '/page/' not in url:
+            url = url + '/page/1'
 
         # 링크가 중복되는 경우 있어서 set객체로 저장
         page_set = set()
         page_set.add(url)
 
-        max_num = 0
+        max_num = 1
 
-        for link in soup.find_all('a'):
-            temp_link = link.get('href')
-            if 'page=' in str(temp_link):
-                num = temp_link.split('page=')[1]
-                # 총 페이지 번호 설정
-                if int(num) > max_num:
-                    max_num = int(num)
+        temp = soup.find_all('div', {'id': 'titlelist_paging'})
+        s = temp[0].find_all('a')
+        num = len(s)
+        # 페이지 번호가 있을 때, 10이 넘어가서 다음이 있을때의 수정 필요
+        if num > 0:
+            max_num = s[num-1].get_text().strip()
+            cnt = 0
+            next_num = ''
+            while 1:
+                if max_num == '다음':
+                    if cnt == 0:
+                        next_num = s[num-2].get_text().strip()
 
-        # 페이지 번호별 주소 생성
-        for i in range(1, max_num + 1):
-            _url = url.replace('page=1', 'page={}'.format(i))
-            page_set.add(_url)
+                    max_num, url, next_num = self.next_page(url, next_num)
+                    print(max_num)
+                    print(url)
+                    cnt = cnt + 1
+                else:
+                    break
+
+            # 페이지 번호별 주소 생성
+            for i in range(1, int(max_num) + 1):
+                _url = url.replace('/page/1', '/page/{}'.format(i))
+                page_set.add(_url)
 
         return page_set, title_strip
+
+    # 다음 페이지 번호 추출
+    def next_page(self, url, next_num):
+        i = int(next_num) + 1
+        _url = url.replace('/page/1', '/page/{}'.format(i))
+
+        max_num = next_num
+
+        soup = self._parse(_url)
+
+        temp = soup.find_all('div', {'id': 'titlelist_paging'})
+        s = temp[0].find_all('a')
+        num = len(s)
+
+        # 페이지 번호가 있을 때, 10이 넘어가서 다음이 있을때의 수정 필요
+        if num > 0:
+            max_num = s[num-1].get_text().strip()
+            next_num = s[num-2].get_text().strip()
+
+        return max_num, _url, next_num
 
     # 각 화 링크 주소 추출 메소드
     def link_parse(self, soup, domain_name):
@@ -137,17 +173,13 @@ class Downloader():
         mode = 0
 
         link_set = set()
-        soup_list = soup.find_all('a')
+        soup_list = soup.find_all('div', {'id': 'titlelist_list'})
+        href = soup_list[0].find_all('a')
 
-        for link in soup_list:
+        for link in href:
             temp_link = link.get('href')
-
-            # 비밀번호가 없을 때의 링크 주소 획득
-            if 'category=' in str(temp_link):
-                # print(temp_link)
-                temp_name = domain_name + str(temp_link)
-                # print(temp_name)
-                link_set.add(temp_name)
+            temp_name = domain_name + str(temp_link)
+            link_set.add(temp_name)
 
         # set에 정보가 없으면 패스워드 입력란이 있음
         # 따라서 크롬드라이버로 파싱 수행하게 모드 설정
@@ -163,72 +195,88 @@ class Downloader():
 
         return link_set, mode
 
+    # 타이틀 추출 및 폴더 경로작성
+    def get_title(self, soup, path):
+
+        # 타이틀 추출
+        title = soup.title.get_text()
+        # title_split = title.rsplit('-', maxsplit=1)
+        title_re = re.sub(
+            '[\\/:*\?\"<>|]', '？', title)
+        title = title_re.strip()
+        print(title)
+
+        # 저장될 폴더 경로 작성
+        if title:
+            folder = path + '\\' + title
+        else:
+            folder = ''
+
+        return folder
+
     # 각 화 이미지 추출 및 저장 메소드
     def image_parse(self, soup, path):
 
-        ret = False
-        title = ''
-        try:
-            for link in soup.find('a', {"class": 'link_title'}):
-                title = link.get_text()
-        except Exception:
-            pass
-
-        if not title:
-            for link in soup.find('h3'):
-                title = link.get_text()
+        # 타이틀 추출
+        folder = self.get_title(soup, path)
+        print(folder)
 
         img_list = []
-        filename_dict = {}
+        http = 'http://'
 
-        for link in soup.find_all("img"):
-            img_list.append(link.get('src'))
-            filename_dict[link.get('src')] = link.get('filename')
+        # for link in soup.find_all('img', {'class': 'image_mid'}):
+        #     href = link.get('src')
+        #     if href:
+        #         img_list.append(href)
+        #         print(href)
+
+        # 썸네일이 있는 경우
+        for link in soup.find_all('img', {'class': 'image_mid'}):
+            href = link.get('src')
+            if href:
+                if 'thumbnail' in href:
+                    src_temp = href.rsplit(http, maxsplit=1)
+                    src = http + src_temp[1]
+                    img_list.append(src)
+                    print(src)
+                else:
+                    img_list.append(href)
+                    print(href)
 
         # 패스워드 있어서 이미지 없을시 예외발생해서 크롬다운로드 실행
         if len(img_list) < 2:
             raise Exception
 
-        locate = path + '\\' + title
-
-        if not os.path.exists(locate):
-            os.mkdir(locate)
-            print(title)
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+            get_obj = cli.CreateRequests()
+            print(folder)
         else:
-            print(title + ' is exist')
+            print(folder + ' is exist')
             return
 
-        for num, img in enumerate(img_list, 1):
-            # print('img: ' + img)
-            extension = img.rsplit('.')
-            length = len(extension)
-            img_extension = extension[length - 1].split('?')
-            # print(img_extension)
-            img_name = ''
-
-            # 링크에 확장자가 지정이 되있는 경우
-            if len(img_extension[0]) == 3 or 4:
-                if img_extension[0] == 'gif':
-                    pass
-                else:
-                    number = '%03d' % num
-                    img_name = str(number) + '.' + img_extension[0]
-                    ret = self.download(img, img_name, locate)
-            else:
-                # 링크에 확장자가 없는 경우 파일이름 엘리먼츠로 작성
-                img_name = filename_dict.get(img)
-                # print('img_name: ' + img_name)
-                if not img_name:
-                    ret = self.download(img, img_name, locate)
-
-            if ret:
-                print(title + ' ' + img_name + ' is downloaded')
+        # 이미지 파일 다운로드
+        for i, img in enumerate(img_list, 1):
+            file_ext = img.rsplit('.', maxsplit=1)
+            num = '%03d' % i
+            file_name = num + '.' + file_ext[1]
+            print(file_name)
+            locate = folder + '\\' + file_name
+            if not os.path.exists(locate):
+                with open(locate, mode="wb") as file:
+                    print(img)
+                    response = get_obj.get(img)
+                    file.write(response.content)
 
     # soup 웹 파싱 메소드
-    def _parse(self, web_url):
-        with request.urlopen(web_url) as response:
-            html = response.read()
-            soup = BeautifulSoup(html, 'html.parser')
+    def _parse(self, url):
+        # with request.urlopen(web_url) as response:
+        #     html = response.read()
+        #     soup = BeautifulSoup(html, 'html.parser')
+        req_url = request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        response = request.urlopen(req_url)
+        html = response.read()
+        soup = BeautifulSoup(html, 'html.parser')
 
         return soup
 
@@ -253,7 +301,7 @@ class Downloader():
             soup = self._parse(link)
             try:
                 # 이미지 다운로드 실행
-                self.image_parse(soup)
+                self.image_parse(soup, path)
             except Exception as e:
                 print(e)
 
@@ -264,6 +312,7 @@ class Downloader():
         # 홈페이지 메인주소 작성 ex) xxx.tistory.com
         # 카테고리에서 각 링크 주소를 추출해서 작성하는데 필요
         domain_name = self.domain_parse(url)
+        print(domain_name)
 
         # 페이지 번호를 포함한 전체 주소 리스트 획득
         page_set, title = self.page_parse(url, domain_name)
@@ -271,6 +320,8 @@ class Downloader():
         folder = path + '\\' + title
         if not os.path.exists(folder):
             os.mkdir(folder)
+
+        print(page_set)
 
         for page in page_set:
             soup = self._parse(page)
@@ -282,7 +333,6 @@ class Downloader():
 
             # 실행될 최대 쓰레드 개수 설정
             workers = min(MAX_THREAD, len(link_set))
-
             with futures.ThreadPoolExecutor(workers) as executor:
                 executor.map(self._multi_threading, page_tuple_list)
 
@@ -338,11 +388,11 @@ if __name__ == "__main__":
             else:
                 print("다운받을 주소를 입력하세요.")
                 url = input()
-                obj.main(cli_input)
+                obj.main(url)
         except Exception as e:
             print('[Error]: ' + str(e))
-            print('다운로드 받을 주소는 페이지 번호가 표시되어 있는 주소를 입력하세요.')
-            print('예) https://xxx.tistory.com/category/xxx?page=1')
+            print('다운로드 받을 주소는 카테고리 주소를 입력하세요.')
+            print('예) https://xxx.tistory.com/category/xxx')
 
         print("*"*70)
         print("작업이 종료 되었습니다.")

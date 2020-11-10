@@ -7,6 +7,8 @@ from concurrent import futures
 from selenium import webdriver
 from urllib import request
 
+# 최대 프로세스 개수
+MAX_PROCESS = 10
 # 최대 쓰레드 개수
 MAX_THREAD = 10
 # 현재 폴더 경로
@@ -61,12 +63,19 @@ class Downloader():
                 pop = temp.replace("viewimage.php", "viewimagePop.php")
                 img_list_pop.append('https://image.dcinside.com/' + pop)
 
-        # 팝업 주소로 접속후 이미지 파일 주소 접속시 자동다운됨
-        for i, link in enumerate(img_list_pop, 0):
-            driver.get(link)
-            driver.get(img_list[i])
-            print(img_list[i] + ' is downloaded')
-            time.sleep(2)
+        # 이미지 파일 없으면 폴더 삭제
+        if img_list:
+            # 폴더 생성
+            self.create_folder(folder)
+            # 팝업 주소로 접속후 이미지 파일 주소 접속시 자동다운됨
+            for i, link in enumerate(img_list_pop, 0):
+                driver.get(link)
+                driver.get(img_list[i])
+                print(img_list[i] + ' is downloaded')
+                time.sleep(2)
+        else:
+            # blogspot 업로드 파일 확인
+            self.three_main(url)
 
         # 드라이버 종료
         driver.quit()
@@ -74,28 +83,15 @@ class Downloader():
     # 게시글 하나에서만 이미지 다운
     def one_main(self, url):
         # url = 'https://gall.dcinside.com/board/view/?id=keion&no=181231'
-        path = SELLECT_PATH
+        print(url)
 
         # 주소 파싱
         soup = self._parse(url)
 
-        # 타이틀 추출
-        title = soup.title.get_text()
-        title_split = title.split('-')
-        title_re = re.sub(
-            '[\\/:*\?\"<>|]', '？', title_split[0])
-        title = title_re.strip()
-        print(title)
-
-        # 저장될 폴더 생성
-        folder = path + '\\' + title
-        if not os.path.exists(folder):
-            os.mkdir(folder)
-        else:
-            print(title + ' is exist')
-            return
-
-        self.crome_download(url, folder)
+        # 타이틀 추출 및 폴더 생성
+        folder = self.get_title(soup)
+        if folder:
+            self.crome_download(url, folder)
 
     # 게시글에 포함된 링크 전체의 이미지 다운
     def two_main(self, url):
@@ -107,18 +103,82 @@ class Downloader():
 
         # 각화 링크 추출
         page_list = []
-        for link in soup.find_all('a', {'class': 'tx-link'}):
+        # 링크 주소에 클래스 속성이 없는 경우 필터링 하기가 어려움
+        # for link in soup.find_all('a', {'class': 'tx-link'}):
+        for link in soup.find_all('a'):
             href = link.get('href')
             page_list.append(href)
-
-        print(page_list)
 
         # 각화 링크별 다운로드 실행
         # 실행될 최대 쓰레드 개수 설정
         workers = min(MAX_THREAD, len(page_list))
 
+        # with futures.ProcessPoolExecutor(workers) as executor:
         with futures.ThreadPoolExecutor(workers) as executor:
+            # executor.map(self.two_sub_main, page_list)
             executor.map(self.one_main, page_list)
+
+    # 게시글 하나에서만 이미지 다운
+    def two_sub_main(self, url):
+        # url = 'https://gall.dcinside.com/board/view/?id=keion&no=181231'
+
+        # 주소 파싱
+        soup = self._parse(url)
+
+        # 파싱되는 주소가 다른 페이지로 리다이렉트 됨으로 추출해서 다시 파싱 필요
+        temp_url = str(soup)
+        spl_url = temp_url.split("'", maxsplit=1)
+        rspl_url = spl_url[1].rsplit("'", maxsplit=1)
+        url = 'https://gall.dcinside.com' + rspl_url[0]
+
+        print(url)
+
+        # 링크 되는 주소로 다시 파싱
+        soup = self._parse(url)
+
+        # 타이틀 추출 및 폴더 생성
+        folder = self.get_title(soup)
+        if folder:
+            self.crome_download(url, folder)
+
+    # 구글 저장된 페이지 다운
+    def three_main(self, url):
+        # url = 'https://gall.dcinside.com/board/view/?id=keion&no=181231'
+        print(url)
+
+        # 주소 파싱
+        soup = self._parse(url)
+
+        img_list = []
+        for link in soup.find_all('a'):
+            href = link.get('href')
+            if href:
+                if 'blogspot.com' in href:
+                    img_list.append(href)
+
+        print(img_list)
+
+        # 이미지 파일 없으면 삭제
+        if not img_list:
+            return
+
+        # 타이틀 추출 및 폴더 생성
+        folder = self.get_title(soup)
+        if folder:
+            self.create_folder(folder)
+            get_obj = cli.CreateRequests()
+            # 이미지 파일 다운로드
+            for i, img in enumerate(img_list, 1):
+                # file_name = img.rsplit('/', maxsplit=1)
+                file_ext = img.rsplit('.', maxsplit=1)
+                num = '%03d' % i
+                file_name = num + '.' + file_ext[1]
+                print(file_name)
+                locate = folder + '\\' + file_name
+                if not os.path.exists(locate):
+                    with open(locate, mode="wb") as file:
+                        response = get_obj.get(img)
+                        file.write(response.content)
 
     # 저장폴더 변경 메소드
     def change_folder(self, forlder):
@@ -139,6 +199,43 @@ class Downloader():
 
         return soup
 
+    # 타이틀 추출 및 폴더 경로작성
+    def get_title(self, soup):
+
+        path = SELLECT_PATH
+
+        # 타이틀 추출
+        title = soup.title.get_text()
+        title_split = title.rsplit('-', maxsplit=1)
+        title_re = re.sub(
+            '[\\/:*\?\"<>|]', '？', title_split[0])
+        title = title_re.strip()
+        print(title)
+
+        # 저장될 폴더 경로 작성
+        if title:
+            folder = path + '\\' + title
+        else:
+            folder = ''
+
+        # if not os.path.exists(folder):
+        #     os.mkdir(folder)
+        # else:
+        #     print(title + ' is exist')
+        #     folder = ''
+
+        return folder
+
+    # 폴더 생성
+    def create_folder(self, folder):
+
+        # 저장될 폴더 생성
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+        else:
+            print(folder + ' is exist')
+            folder = ''
+
 
 if __name__ == "__main__":
     # url = 'https://gall.dcinside.com/board/view/?id=keion&no=181231'
@@ -147,6 +244,7 @@ if __name__ == "__main__":
     print("다운받을 디시 주소를 입력하고 엔터를 누르시오.")
     print("1. 이미지가 포함되어 있는 주소")
     print("2. 링크가 포함되어 있는 주소 (각화 모음)")
+    print("3. 삭제된 주소 (구글 저장된 페이지)")
     print("q를 입력하면 종료 합니다.")
     print("*"*70)
 
@@ -164,6 +262,10 @@ if __name__ == "__main__":
             print("다운받을 주소를 입력하세요.")
             url = input()
             obj.two_main(url)
+        elif cli_input == '3':
+            print("다운받을 주소를 입력하세요.")
+            url = input()
+            obj.three_main(url)
     except Exception as e:
         print(e)
 

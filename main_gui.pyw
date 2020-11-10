@@ -3,6 +3,7 @@ import logging
 import manatoki_cli as toki
 import tistory_cli as tistory
 import dc_cli as dc
+import egloos_cli as eg
 import subprocess
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, \
@@ -247,6 +248,14 @@ class MyApp(QMainWindow, QPlainTextEdit):
 
             if check_box:
                 obj.two_main(url)
+            else:
+                obj.one_main(url)
+        elif 'egloos' in url:
+            # 이글루스 다운로더 인스턴스 생성
+            obj = eg.Downloader()
+
+            if 'category' in url:
+                obj.main(url)
             else:
                 obj.one_main(url)
         else:
