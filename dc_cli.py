@@ -50,7 +50,8 @@ class Downloader():
         # 이미지 링크 추출, 디시는 실제 이미지를 별개의 도메인에 저장(이하는 동일)
         img_list = []
         img_list_pop = []
-        for link in soup.find_all('img', {'class': 'txc-image'}):
+        # for link in soup.find_all('img', {'class': 'txc-image'}):
+        for link in soup.find_all('img'):
             href = link.get('src')
             temp = str(href)
             if 'viewimage.php' in temp:
@@ -63,7 +64,10 @@ class Downloader():
                 pop = temp.replace("viewimage.php", "viewimagePop.php")
                 img_list_pop.append('https://image.dcinside.com/' + pop)
 
-        # 이미지 파일 없으면 폴더 삭제
+        print("img_list: ")
+        print(img_list)
+
+        # 이미지 파일 있으면 폴더 생성 및 다운로드
         if img_list:
             # 폴더 생성
             self.create_folder(folder)

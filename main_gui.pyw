@@ -125,12 +125,6 @@ class MyApp(QMainWindow, QPlainTextEdit):
     def stack1UI(self):
         layout = QFormLayout()
 
-        # 버튼 생성
-        btn = QPushButton('Download', self)
-        # btn.move(700, 0)
-        # btn.resize(btn.sizeHint())
-        btn.clicked.connect(self.download)
-
         # 진행상태바 표시
         self.pbar = QProgressBar(self)
         self.pbar.setAlignment(QtCore.Qt.AlignCenter)
@@ -155,7 +149,16 @@ class MyApp(QMainWindow, QPlainTextEdit):
             '   저장폴더에 폴더이름 입력 (폴더 자동생성)'
                         )
 
+        # 버튼 생성
+        btn = QPushButton('Download', self)
+        btn_clr = QPushButton('Clear', self)
+        # btn.move(700, 0)
+        # btn.resize(btn.sizeHint())
+        btn.clicked.connect(self.download)
+        btn_clr.clicked.connect(self.set_clear)
+
         layout.addRow("주소", self.url)
+        # layout.addRow("", btn_clr)
         layout.addRow("실행", btn)
         layout.addRow("상태", self.pbar)
         layout.addRow("", label)
@@ -164,12 +167,16 @@ class MyApp(QMainWindow, QPlainTextEdit):
         # 위젯에 작성한 레이아웃을 배치
         self.stack1.setLayout(layout)
 
+    # 주소 입력 초기화
+    def set_clear(self):
+        self.url.setText('')
+
     def stack2UI(self):
         layout = QFormLayout()
 
         label = QLabel()
         label4 = QLabel(
-            '※ 지원 사이트: manatoki.net , tistory.com, dcinside.com' + '\n\n' +
+            '※ 지원 사이트: manatoki.net , tistory.com, dcinside.com, egloos.com' + '\n\n' +
             '1. 주소창에 다운받을 사이트의 주소를 입력' + '\n\n' +
             '   ・manatoki는 전편보기 주소입력시 전편 다운(한 화도 가능):' + '\n' +
             '   예) https://manatoki77.net/comic/*****' + '\n\n' +
@@ -267,6 +274,7 @@ class MyApp(QMainWindow, QPlainTextEdit):
 
         print("*"*60)
         print("다운로드가 완료되었습니다.")
+        self.set_clear()
         print("*"*60)
 
     def show_log(self):

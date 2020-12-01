@@ -8,7 +8,7 @@ from concurrent import futures
 from selenium import webdriver
 
 # 최대 프로세스 개수
-MAX_PROCESS = 10
+MAX_PROCESS = 5
 # 최대 쓰레드 개수, 한화에 파일 개수가 많은 경우 다른 스레드에서 타임아웃 발생함에 따라 줄임
 MAX_THREAD = 10
 # 현재 폴더 경로
@@ -17,6 +17,8 @@ CURRENT_PATH = os.getcwd()
 global SELLECT_PATH
 SELLECT_PATH = 'D:\\Manatoki'
 # SELLECT_PATH = CURRENT_PATH
+# 전체 다운로드 플래그
+TOTAL_DOWNLOAD = True
 
 
 class CreateRequests:
@@ -65,6 +67,7 @@ class Downloader():
     def manatoki_parse(self, url):
         img_list = []
         flag = False
+        soup_main = None
 
         while True:
             try:
@@ -108,6 +111,7 @@ class Downloader():
                     continue
                 else:
                     flag = True
+
             return soup_main, img_list
 
     # 각 화 이미지 추출 및 저장 메소드
@@ -133,6 +137,7 @@ class Downloader():
 
     # 각 화 폴더 이름 생성 메소드
     def folder_name(self, soup, path):
+
         link = soup.find('div', {"class": 'toon-title'})
         title = link.get_text()
         # title = soup.title.get_text()
@@ -143,7 +148,7 @@ class Downloader():
         title_re = re.sub(
             '[\\/:*\?\"<>|]', '？', title_split[0])
         title_strip = title_re.strip()
-        # locate = path + '\\' + title_strip + '화'
+
         locate = path + '\\' + title_strip
 
         return locate, title
@@ -161,6 +166,7 @@ class Downloader():
 
     # 전체목록 주소 추출 메소드
     def total_list_parse(self, soup):
+        href = ''
 
         for link in soup.find_all('a', {"style": 'margin: 0 5px;'}):
             href = link.get('href')
@@ -186,8 +192,12 @@ class Downloader():
 
         # 만화별 다운로드
         try:
+            print("*"*70)
+            print(page)
+            print("*"*70)
             soup = self._parse(page)
             link_set = self.entity_page(soup)
+            # link_set = self.one_page(soup)
             if len(link_set) > 0:
                 for link in link_set:
                     self.one_main(link)
@@ -197,6 +207,7 @@ class Downloader():
     # soup 웹 파싱 메소드
     def _parse(self, url):
         req_url = request.Request(url, headers={'User-Agent': 'Mozilla/6.0'})
+        # req_url = request.Request(url, headers={'User-Agent': 'Edg/87.0.664.47'})
         response = request.urlopen(req_url)
         html = response.read()
         soup = BeautifulSoup(html, 'html.parser')
@@ -209,6 +220,7 @@ class Downloader():
         title = soup.title.get_text()
         title_split = title.split('>')
         writer = ''
+        flag = False
 
         for link in soup.find_all('div', {"class": 'view-content'}):
             temp = link.get_text()
@@ -235,11 +247,16 @@ class Downloader():
 
         if not os.path.exists(folder):
             os.mkdir(folder)
+        else:
+            flag = True
 
-        return folder_name
+        if not TOTAL_DOWNLOAD:
+            flag = False
+
+        return folder_name, flag
 
     # 전체 페이지 번호 추출 및 리스트 작성
-    def total_page(self):
+    def total_page(self, input_url):
         url = 'https://manatoki.net'
 
         # 헤더 정보가 없어서 접속 안될때 사용방법
@@ -249,32 +266,47 @@ class Downloader():
 
         get_obj = CreateRequests()
         res = get_obj.get(url)
-        html = res.text
-        soup = BeautifulSoup(html, 'html.parser')
+        # html = res.text
+        # soup = BeautifulSoup(html, 'html.parser')
 
         templete = res.url + '/comic/p'
 
         page_list = []
-        max_num = 0
+        # max_num = 0
 
         # 최종 페이지 번호 추출
-        for link in soup.find_all('a'):
-            # print(link.get)
-            temp = link.get('href')
-            if temp:
-                temp_rsplit = temp.rsplit('/')
-                length = len(temp_rsplit)
+        # for link in soup.find_all('a'):
+        #     # print(link.get)
+        #     temp = link.get('href')
+        #     if temp:
+        #         temp_rsplit = temp.rsplit('/')
+        #         length = len(temp_rsplit)
 
-                # 정규식
-                if re.match('p([0-9])', temp_rsplit[length-1]):
-                    temp_num = temp_rsplit[length-1][1:]
-                    if int(temp_num) > max_num:
-                        max_num = int(temp_num)
+        #         # 정규식
+        #         if re.match('p([0-9])', temp_rsplit[length-1]):
+        #             temp_num = temp_rsplit[length-1][1:]
+        #             if int(temp_num) > max_num:
+        #                 max_num = int(temp_num)
+        page_num = input_url.rsplit('/', 1)[1]
+        page_num = page_num.replace('p', '').strip()
+        max_num = int(page_num)
+        print(max_num)
 
         # 페이지 번호별 주소 작성
-        for i in range(1, max_num):
+        for i in range(2, max_num):
             page = templete + str(i)
             page_list.append(page)
+
+        # 전체 리스트 중 1페이지 다운로드
+        page = res.url + 'comic/p1'
+        try:
+            soup = self._parse(page)
+            link_set = self.one_page(soup)
+            if len(link_set) > 0:
+                for link in link_set:
+                    self.select_main(link)
+        except Exception as e:
+            print(e)
 
         return page_list
 
@@ -290,6 +322,45 @@ class Downloader():
                         temp_rsplit = temp.rsplit('?')
                         link_set.add(temp_rsplit[0])
 
+        return link_set
+
+    # 업데이트용: 페이지에서 만화별 링크 추출
+    def update_page(self, soup):
+        link_set = set()
+
+        # 한 화 링크만 추출
+        # for link in soup.find_all('a', {"class": 'ellipsis'}):
+        # 전편 보기 링크만 추출
+        for link in soup.find_all('a', {"class": 'btn btn-xs btn-primary'}):
+            temp = link.get('href')
+            if temp:
+                print(temp)
+                if 'comic/' in temp:
+                    if 'http' in temp:
+                        temp_rsplit = temp.rsplit('?')
+                        link_set.add(temp_rsplit[0])
+
+        return link_set
+
+    # 한 페이지에서 만화별 링크 추출
+    def one_page(self, soup):
+        link_set = set()
+
+        # 전체 링크 추출
+        for link in soup.find_all('a'):
+            temp = link.get('href')
+            if temp:
+                print(temp)
+                if 'comic/' in temp:
+                    if 'http' in temp:
+                        temp_rsplit = temp.rsplit('/')
+                        length = len(temp_rsplit)
+                        if re.match('p([0-9])', temp_rsplit[length-1]):
+                            continue
+                        else:
+                            link_set.add(temp)
+
+        print(link_set)
         return link_set
 
     # 현재 존재하는 폴더를 dict 형태로 반환
@@ -413,9 +484,9 @@ class Downloader():
         total_soup = self._parse(total_url)
 
         # 작가명 폴더 생성
-        path = self.create_folder(total_soup)
+        path, flag = self.create_folder(total_soup)
 
-        # 한 화 폴더 생성
+        # 한 화 폴더 경로 작성
         locate, title = self.folder_name(soup, path)
         path_locate = SELLECT_PATH + '\\' + locate
 
@@ -447,8 +518,13 @@ class Downloader():
             print(e)
             return
 
-        # 작가명 폴더 생성
-        path = self.create_folder(soup)
+        # 작가명 폴더명 작성
+        path, flag = self.create_folder(soup)
+
+        # 전체 다운로드시 한번이라도 다운로드 받았으면 패스
+        if flag:
+            print(path + ' is exist')
+            return
 
         # 한화별 주소 파싱
         page_list = self.link_parse(soup)
@@ -462,6 +538,9 @@ class Downloader():
             # 각 화 폴더가 존재하면 스킵
             if os.path.exists(path_locate):
                 print(title + ' is exist')
+                # 업데이트 수행중 이하에 중복폴더가 있는 경우 이하는 패스
+                if TOTAL_DOWNLOAD is False:
+                    break
             else:
                 os.mkdir(path_locate)
                 print(title)
@@ -469,20 +548,23 @@ class Downloader():
                 page_tuple_list.append(temp)
 
         # 실행될 최대 쓰레드 개수 설정
-        workers = min(MAX_THREAD, len(page_list))
-
-        with futures.ThreadPoolExecutor(workers) as executor:
-            executor.map(self._multi_threading, page_tuple_list)
+        page_num = len(page_tuple_list)
+        if page_num > 0:
+            num = page_num if page_num > 0 else 1
+            workers = min(MAX_THREAD, num)
+            with futures.ThreadPoolExecutor(workers) as executor:
+                executor.map(self._multi_threading, page_tuple_list)
 
     # 마나토끼의 업로드 된 전체만화를 백업
-    def two_main(self):
+    def two_main(self, url):
 
         # 전체 리스트 파싱
-        page_list = self.total_page()
+        page_list = self.total_page(url)
         # process_list = []
 
         # 페이지별로 변수 할당해 프로세스 생성(페이지 수만큼 프로세스 생성)
-        num = len(page_list)
+        page_num = len(page_list)
+        num = page_num if page_num > 0 else 1
 
         # for i in range(0, num):
         #     temp = vars()['p_{}'.format(i)] = Process(
@@ -501,19 +583,63 @@ class Downloader():
             futers = executor.map(self._multi_process, page_list)
             print(futers)
 
-    # 전체 백업중 업데이트 된 부분만 갱신
-    def three_main(self):
-        print('미완성 작업중')
-        # data = total_parse_json()
-        # print(data)
-        pass
+    # 한 페이지만 다운로드
+    def three_main(self, url):
+
+        link_set = None
+
+        # 페이지 다운로드
+        try:
+            soup = self._parse(url)
+            link_set = self.one_page(soup)
+
+            if len(link_set) > 0:
+                for link in link_set:
+                    self.select_main(link)
+        except Exception as e:
+            print(e)
+            return
+
+        # 멀티 프로세스 사용시 글로벌 변수 값변경 처리가 안됨
+        # with futures.ProcessPoolExecutor(MAX_PROCESS) as executor:
+        #     futers = executor.map(self.select_main, link_set)
+        #     print(futers)
+
+    # 전체만화 업데이트
+    def four_main(self):
+
+        # 전체 리스트 중 1페이지 파싱
+        url = 'https://manatoki.net'
+        get_obj = CreateRequests()
+        res = get_obj.get(url)
+        # page = res.url + 'comic/p1'
+        page = res.url + 'bbs/page.php?hid=update&page=1'
+
+        link_set = None
+
+        # 페이지 다운로드
+        try:
+            soup = self._parse(page)
+            link_set = self.update_page(soup)
+            if len(link_set) > 0:
+                for link in link_set:
+                    self.select_main(link)
+        except Exception as e:
+            print(e)
+
+        # 멀티 프로세스 사용시 글로벌 변수 값변경 처리가 안됨
+        # with futures.ProcessPoolExecutor(MAX_PROCESS) as executor:
+        #     futers = executor.map(self.select_main, link_set)
+        #     print(futers)
 
     # 입력된 주소로 한화 인지 1개 만화인지 판별해서 수행
     def select_main(self, url):
         soup, img_list = self.manatoki_parse(url)
-        # print(img_list)
+        print(url)
         if img_list:
-            self.zero_main(soup, img_list)
+            if TOTAL_DOWNLOAD is True:
+                print('입력한 주소는 한화 주소입니다. 한화다운을 시작합니다.')
+                self.zero_main(soup, img_list)
         else:
             print('입력한 주소는 전편보기 주소입니다. 전편다운을 시작합니다.')
             self.one_main(url)
@@ -522,6 +648,7 @@ class Downloader():
 # Console로 실행했을 때 사용하는 메소드
 def main():
     global SELLECT_PATH
+    global TOTAL_DOWNLOAD
 
     while True:
         try:
@@ -531,7 +658,8 @@ def main():
             print("0. 각 화 주소를 입력해서 한 화를 다운로드")
             print("1. 전편보기 주소를 입력해서 만화별 다운로드(각 화 폴더 존재시 스킵)")
             print("2. 마나토끼 전체 만화를 전부 다운로드")
-            print("3. 전체 다운로드한 만화들을 업데이트")
+            print("3. 한 페이지 다운로드")
+            print("4. 전체 다운로드한 만화들을 업데이트")
             print("8. 저장폴더 변경")
             print("9. 종료")
             print("*"*70)
@@ -544,7 +672,7 @@ def main():
                 try:
                     print("다운받을 마나토끼 한 화보기 주소를 입력하세요.")
                     cli_input = input()
-                    obj.select_main(cli_input)
+                    obj.zero_main(cli_input)
                 except Exception as e:
                     print('[Error]: ' + str(e))
                     print('다운로드 받을 주소는 한 화보기 주소를 입력하세요.')
@@ -552,6 +680,7 @@ def main():
             if cli_input == '1':
                 try:
                     print("다운받을 마나토끼 전편보기 주소를 입력하세요.")
+                    TOTAL_DOWNLOAD = False
                     cli_input = input()
                     obj.one_main(cli_input)
                 except Exception as e:
@@ -561,24 +690,36 @@ def main():
             elif cli_input == '2':
                 try:
                     print("전체 만화의 다운로드를 시작합니다.")
-                    obj.two_main()
+                    print("다운받을 마나토끼 최종 페이지 주소를 입력하세요.")
+                    cli_input = input()
+                    obj.two_main(cli_input)
                     print("전체 만화의 다운로드가 완료되었습니다.")
-                    break
                 except Exception as e:
                     print('[Error]: ' + str(e))
                     print('에러가 발생하였습니다. 관리자에게 문의하세요.')
             elif cli_input == '3':
                 try:
-                    print("전체 만화의 업데이트를 시작합니다.")
-                    obj.three_main()
-                    print("전체 만화의 업데이트가 완료되었습니다.")
-                    break
+                    print("한 페이지 만화 다운로드를 시작합니다.")
+                    print("다운받을 페이지 주소를 입력하세요.")
+                    TOTAL_DOWNLOAD = False
+                    cli_input = input()
+                    obj.three_main(cli_input)
+                    print("한 페이지 만화 다운로드가 완료되었습니다.")
+                except Exception as e:
+                    print('[Error]: ' + str(e))
+                    print('에러가 발생하였습니다. 관리자에게 문의하세요.')
+            elif cli_input == '4':
+                try:
+                    print("전체 만화 업데이트를 시작합니다.")
+                    TOTAL_DOWNLOAD = False
+                    obj.four_main()
+                    print("전체 만화 업데이트가 완료되었습니다.")
                 except Exception as e:
                     print('[Error]: ' + str(e))
                     print('에러가 발생하였습니다. 관리자에게 문의하세요.')
             elif cli_input == '8':
                 print('현재 설정 폴더: ' + SELLECT_PATH)
-                print('설정할 폴더를 입력하세요. 변경하지 않을 경우 그냥 엔터룰 누르세요.')
+                print('설정할 폴더 경로를 입력하세요. 변경하지 않을 경우 그냥 엔터룰 누르세요.')
                 cli_input = input()
                 if cli_input:
                     SELLECT_PATH = cli_input
