@@ -139,7 +139,7 @@ class MyApp(QMainWindow, QPlainTextEdit):
         self.url = QLineEdit()
         self.password = QLineEdit()
         self.folder = QLineEdit()
-        self.check_box = QCheckBox('게시글 안에 링크 목록을 다운', self)
+        self.check_box = QCheckBox('개념글 또는 링크모음 다운', self)
         label = QLabel()
         label4 = QLabel(
             '※ 저장 폴더는 현재 실행파일이 위치한 폴더' + '\n\n' +
@@ -184,7 +184,7 @@ class MyApp(QMainWindow, QPlainTextEdit):
             '   예) https://xxx.tistory.com/category/*****  (전편)' + '\n' +
             '   예) https://xxx.tistory.com/xxx  (한 화)' + '\n\n' +
             '   ・dcinside는 입력주소 안에 있는 이미지 다운: ' + '\n' +
-            '   게시글안에 복수링크가 있는 경우 디시링크 포함 체크시 전체 다운' + '\n' +
+            '   개념글 또는 링크모음은 디시링크 포함 체크시 전체 다운' + '\n' +
             '   예) https://gall.dcinside.com/board/view/?*****' + '\n\n' +
             '2. 실행 버튼 클릭: Download' + '\n\n' +
             '3. 완료 까지 대기: 상태 바 100% 녹색으로 변경' + '\n' +

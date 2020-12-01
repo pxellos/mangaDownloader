@@ -96,6 +96,7 @@ class Downloader():
         folder = self.get_title(soup)
         if folder:
             self.crome_download(url, folder)
+            self.delete_file(folder)
 
     # 게시글에 포함된 링크 전체의 이미지 다운
     def two_main(self, url):
@@ -111,7 +112,12 @@ class Downloader():
         # for link in soup.find_all('a', {'class': 'tx-link'}):
         for link in soup.find_all('a'):
             href = link.get('href')
-            page_list.append(href)
+            if href:
+                if 'comic' in href:
+                    if 'http' in href:
+                        page_list.append(href)
+
+        print(page_list)
 
         # 각화 링크별 다운로드 실행
         # 실행될 최대 쓰레드 개수 설정
@@ -121,6 +127,11 @@ class Downloader():
         with futures.ThreadPoolExecutor(workers) as executor:
             # executor.map(self.two_sub_main, page_list)
             executor.map(self.one_main, page_list)
+
+        # # 다운로드 완료후 트래쉬 폴더 및 파일 삭제
+        # path = SELLECT_PATH
+        # if path != 'D:\\Manatoki':
+        #     self.delete_folder(path)
 
     # 게시글 하나에서만 이미지 다운
     def two_sub_main(self, url):
@@ -240,6 +251,42 @@ class Downloader():
             print(folder + ' is exist')
             folder = ''
 
+    # 불필요 파일삭제
+    def delete_file(self, path):
+
+        # 해당경로의 폴더 및 파일 리스트 취득
+        file_list = os.listdir(path)
+        for file in file_list:
+            file_path = path + '\\' + file
+            # 해당 경로의 확장자 확인
+            if 's2' in file:
+                os.remove(file_path)
+
+        # 파일삭제후 내용없으면 폴더도 삭제
+        file_list = os.listdir(path)
+        if len(file_list) == 0:
+            os.rmdir(path)
+
+    # # 불필요 파일 및 폴더삭제
+    # def delete_folder(self, path):
+
+    #     folder_list = os.listdir(path)
+
+    #     for folder in folder_list:
+    #         folder_path = path + '\\' + folder
+    #         # 해당 경로의 확장자 확인
+    #         file_list = os.listdir(folder_path)
+    #         for file in file_list:
+    #             file_path = folder_path + '\\' + file
+    #             # 해당 경로의 확장자 확인
+    #             if 's2' in file:
+    #                 os.remove(file_path)
+
+    #         # 파일삭제후 내용없으면 폴더도 삭제
+    #         file_list = os.listdir(folder_path)
+    #         if len(file_list) == 0:
+    #             os.rmdir(folder_path)
+
 
 if __name__ == "__main__":
     # url = 'https://gall.dcinside.com/board/view/?id=keion&no=181231'
@@ -247,7 +294,7 @@ if __name__ == "__main__":
     print("*"*70)
     print("다운받을 디시 주소를 입력하고 엔터를 누르시오.")
     print("1. 이미지가 포함되어 있는 주소")
-    print("2. 링크가 포함되어 있는 주소 (각화 모음)")
+    print("2. 개념글 또는 링크 포함 게시물 (각화 모음)")
     print("3. 삭제된 주소 (구글 저장된 페이지)")
     print("q를 입력하면 종료 합니다.")
     print("*"*70)
