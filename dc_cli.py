@@ -20,6 +20,40 @@ SELLECT_PATH = 'D:\\Manatoki'
 
 class Downloader():
 
+    # 이미지 저장 메소드
+    def download(self, url, file_name, path, num):
+
+        get_obj = cli.CreateRequests()
+
+        locate = path + '\\' + file_name
+        if not os.path.exists(locate):
+            with open(locate, mode="wb") as file:   # open in binary mode
+                response = get_obj.get(url)         # get request
+                file.write(response.content)        # write to file
+        else:
+            temp = file_name.rsplit('.')
+            extension = temp[1]
+            name = temp[0]
+            locate = path + '\\' + name + '_' + str(num) + '.' + extension
+            with open(locate, mode="wb") as file:
+                response = get_obj.get(url)
+                file.write(response.content)
+
+        # 파일 크기가 200KB 미만이면 삭제
+        file_size = os.path.getsize(locate)
+        if file_size < 200000:
+            os.remove(locate)
+
+    # html 파싱 메소드
+    def dc_parse(self, soup):
+        img_list = []
+
+        for link in soup.find_all("img"):
+            src = link.get("src")
+            img_list.append(src)
+
+        return img_list
+
     # 크롬드라이버로 다운로드
     def crome_download(self, url, folder):
 
@@ -195,6 +229,76 @@ class Downloader():
                         response = get_obj.get(img)
                         file.write(response.content)
 
+    # 블로그 링크의 이미지 다운
+    def four_main(self, url):
+        print(url)
+
+        # 주소 파싱
+        soup = self._parse(url)
+
+        # 타이틀 추출 및 폴더 생성
+        folder = self.get_title(soup)
+        if not folder:
+            print("에러가 발생하였습니다. 해당 폴더가 없음")
+            return
+        self.create_folder(folder)
+
+        # 이미지 파싱
+        img_list = self.dc_parse(soup)
+        self.image_parse(soup, folder, img_list)
+        self.delete_file(folder)
+
+    # 블로그 링크 모음의 이미지 다운
+    def five_main(self, url):
+        print(url)
+
+        # 주소 파싱
+        soup = self._parse(url)
+
+        # 각화 링크 추출
+        page_list = []
+        # 링크 주소에 클래스 속성이 없는 경우 필터링 하기가 어려움
+        # for link in soup.find_all('a', {'class': 'tx-link'}):
+        for link in soup.find_all('a'):
+            href = link.get('href')
+            if href:
+                if 'comic' in href:
+                    if 'http' in href:
+                        page_list.append(href)
+
+        print(page_list)
+
+        # 각화 링크별 다운로드 실행
+        # 실행될 최대 쓰레드 개수 설정
+        workers = min(MAX_THREAD, len(page_list))
+
+        # with futures.ProcessPoolExecutor(workers) as executor:
+        with futures.ThreadPoolExecutor(workers) as executor:
+            # executor.map(self.two_sub_main, page_list)
+            executor.map(self.four_main, page_list)
+
+    # 각 화 이미지 추출 및 저장 메소드
+    def image_parse(self, soup, folder, img_list):
+
+        # 폴더 생성 및 제목 추출
+        path = folder
+
+        for num, img in enumerate(img_list, 1):
+            extension = img.rsplit('.')
+            length = len(extension)
+            img_extension = extension[length - 1]
+            if img_extension == 'gif':
+                continue
+            if len(img_extension) > 3:
+                continue
+
+            file = img.rsplit('/')
+            length = len(file)
+            file_name = file[length - 1]
+
+            self.download(img, file_name, path, num)
+            print(file_name + ' is downloaded')
+
     # 저장폴더 변경 메소드
     def change_folder(self, forlder):
 
@@ -293,9 +397,11 @@ if __name__ == "__main__":
 
     print("*"*70)
     print("다운받을 디시 주소를 입력하고 엔터를 누르시오.")
-    print("1. 이미지가 포함되어 있는 주소")
+    print("1. 이미지가 첨부파일로 포함되어 있는 주소")
     print("2. 개념글 또는 링크 포함 게시물 (각화 모음)")
     print("3. 삭제된 주소 (구글 저장된 페이지)")
+    print("4. 이미지가 블로그 링크로 되어 있는 주소")
+    print("5. 4번이 링크되어 있는 주소 (각화 모음)")
     print("q를 입력하면 종료 합니다.")
     print("*"*70)
 
@@ -317,6 +423,14 @@ if __name__ == "__main__":
             print("다운받을 주소를 입력하세요.")
             url = input()
             obj.three_main(url)
+        elif cli_input == '4':
+            print("다운받을 주소를 입력하세요.")
+            url = input()
+            obj.four_main(url)
+        elif cli_input == '5':
+            print("다운받을 주소를 입력하세요.")
+            url = input()
+            obj.five_main(url)
     except Exception as e:
         print(e)
 
