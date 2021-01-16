@@ -9,8 +9,8 @@ from selenium import webdriver
 
 # 최대 프로세스 개수
 MAX_PROCESS = 5
-# 최대 쓰레드 개수, 한화에 파일 개수가 많은 경우 다른 스레드에서 타임아웃 발생함에 따라 줄임
-MAX_THREAD = 10
+# 최대 쓰레드 개수, 한화에 파일 개수가 많은 경우 다른 스레드에서 타임아웃 발생함에 따라 줄임, 포비든 뜸
+MAX_THREAD = 5
 # 현재 폴더 경로
 CURRENT_PATH = os.getcwd()
 # 지정 경로
@@ -19,6 +19,8 @@ SELLECT_PATH = 'D:\\Manatoki'
 # SELLECT_PATH = CURRENT_PATH
 # 전체 다운로드 플래그
 TOTAL_DOWNLOAD = True
+# 전체화 검사 다운로드 플래그
+ONE_DOWNLOAD = True
 
 
 class CreateRequests:
@@ -146,7 +148,7 @@ class Downloader():
 
         # 폴더 생성이 실패하는 특수문자 제거
         title_re = re.sub(
-            '[\\/:*\?\"<>|]', '？', title_split[0])
+            '[\/:*?"<>|]', '？', title_split[0])
         title_strip = title_re.strip()
 
         locate = path + '\\' + title_strip
@@ -239,11 +241,11 @@ class Downloader():
             writer = 'N／A'
 
         # 폴더 생성이 실패하는 특수문자 제거
-        title_re = re.sub(
-            '[\\/:*\?\"<>|]', '？', title_split[0])
-        title_strip = title_re.strip()
-        folder_name = '[' + writer + '] ' + title_strip
-        folder = path + '\\' + folder_name
+        folder_name = '[' + writer + '] ' + title_split[0]
+        folder_re = re.sub(
+            '[\/:*?"<>|]', '？', folder_name)
+        folder_strip = folder_re.strip()
+        folder = path + '\\' + folder_strip
 
         if not os.path.exists(folder):
             os.mkdir(folder)
@@ -253,7 +255,7 @@ class Downloader():
         if not TOTAL_DOWNLOAD:
             flag = False
 
-        return folder_name, flag
+        return folder_strip, flag
 
     # 전체 페이지 번호 추출 및 리스트 작성
     def total_page(self, input_url):
@@ -539,7 +541,7 @@ class Downloader():
             if os.path.exists(path_locate):
                 print(title + ' is exist')
                 # 업데이트 수행중 이하에 중복폴더가 있는 경우 이하는 패스
-                if TOTAL_DOWNLOAD is False:
+                if ONE_DOWNLOAD is True:
                     break
             else:
                 os.mkdir(path_locate)
@@ -649,13 +651,14 @@ class Downloader():
 def main():
     global SELLECT_PATH
     global TOTAL_DOWNLOAD
+    global ONE_DOWNLOAD
 
     while True:
         try:
             print("*"*70)
             print("실행할 작업을 선택하고 엔터를 누르시오.")
             print("*"*70)
-            print("0. 각 화 주소를 입력해서 한 화를 다운로드")
+            print("0. 한 화 다운로드")
             print("1. 전편보기 주소를 입력해서 만화별 다운로드(각 화 폴더 존재시 스킵)")
             print("2. 마나토끼 전체 만화를 전부 다운로드")
             print("3. 한 페이지 다운로드")
@@ -670,17 +673,18 @@ def main():
 
             if cli_input == '0':
                 try:
-                    print("다운받을 마나토끼 한 화보기 주소를 입력하세요.")
+                    print("다운받을 마나토끼 주소를 입력하세요.")
                     cli_input = input()
-                    obj.zero_main(cli_input)
+                    obj.select_main(cli_input)
                 except Exception as e:
                     print('[Error]: ' + str(e))
-                    print('다운로드 받을 주소는 한 화보기 주소를 입력하세요.')
+                    print('다운로드 받을 주소는 한 화 주소를 입력하세요.')
                     print('예) https://manatoki102.net/comic/*****')
             if cli_input == '1':
                 try:
                     print("다운받을 마나토끼 전편보기 주소를 입력하세요.")
                     TOTAL_DOWNLOAD = False
+                    ONE_DOWNLOAD = False
                     cli_input = input()
                     obj.one_main(cli_input)
                 except Exception as e:
