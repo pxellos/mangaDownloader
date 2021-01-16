@@ -295,8 +295,11 @@ class Downloader():
             file = img.rsplit('/')
             length = len(file)
             file_name = file[length - 1]
-
-            self.download(img, file_name, path, num)
+            try:
+                self.download(img, file_name, path, num)
+            except Exception as e:
+                print(e)
+                continue
             print(file_name + ' is downloaded')
 
     # 저장폴더 변경 메소드
@@ -395,44 +398,46 @@ class Downloader():
 if __name__ == "__main__":
     # url = 'https://gall.dcinside.com/board/view/?id=keion&no=181231'
 
-    print("*"*70)
-    print("다운받을 디시 주소를 입력하고 엔터를 누르시오.")
-    print("1. 이미지가 첨부파일로 포함되어 있는 주소")
-    print("2. 개념글 또는 링크 포함 게시물 (각화 모음)")
-    print("3. 삭제된 주소 (구글 저장된 페이지)")
-    print("4. 이미지가 블로그 링크로 되어 있는 주소")
-    print("5. 4번이 링크되어 있는 주소 (각화 모음)")
-    print("q를 입력하면 종료 합니다.")
-    print("*"*70)
+    while True:
 
-    cli_input = input()
-    obj = Downloader()
+        print("*"*70)
+        print("다운받을 디시 주소를 입력하고 엔터를 누르시오.")
+        print("1. 이미지가 첨부파일로 포함되어 있는 주소")
+        print("2. 개념글 또는 링크 포함 게시물 (각화 모음)")
+        print("3. 삭제된 주소 (구글 저장된 페이지)")
+        print("4. 이미지가 블로그 링크로 되어 있는 주소")
+        print("5. 4번이 링크되어 있는 주소 (각화 모음)")
+        print("q를 입력하면 종료 합니다.")
+        print("*"*70)
 
-    try:
-        if cli_input == 'q':
-            os._exit(0)
-        elif cli_input == '1':
-            print("다운받을 주소를 입력하세요.")
-            url = input()
-            obj.one_main(url)
-        elif cli_input == '2':
-            print("다운받을 주소를 입력하세요.")
-            url = input()
-            obj.two_main(url)
-        elif cli_input == '3':
-            print("다운받을 주소를 입력하세요.")
-            url = input()
-            obj.three_main(url)
-        elif cli_input == '4':
-            print("다운받을 주소를 입력하세요.")
-            url = input()
-            obj.four_main(url)
-        elif cli_input == '5':
-            print("다운받을 주소를 입력하세요.")
-            url = input()
-            obj.five_main(url)
-    except Exception as e:
-        print(e)
+        cli_input = input()
+        obj = Downloader()
+
+        try:
+            if cli_input == 'q':
+                os._exit(0)
+            elif cli_input == '1':
+                print("다운받을 주소를 입력하세요.")
+                url = input()
+                obj.one_main(url)
+            elif cli_input == '2':
+                print("다운받을 주소를 입력하세요.")
+                url = input()
+                obj.two_main(url)
+            elif cli_input == '3':
+                print("다운받을 주소를 입력하세요.")
+                url = input()
+                obj.three_main(url)
+            elif cli_input == '4':
+                print("다운받을 주소를 입력하세요.")
+                url = input()
+                obj.four_main(url)
+            elif cli_input == '5':
+                print("다운받을 주소를 입력하세요.")
+                url = input()
+                obj.five_main(url)
+        except Exception as e:
+            print(e)
 
     print("*"*70)
     print("작업이 종료 되었습니다.")
