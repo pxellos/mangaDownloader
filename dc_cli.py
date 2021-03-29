@@ -123,11 +123,18 @@ class Downloader():
         # url = 'https://gall.dcinside.com/board/view/?id=keion&no=181231'
         print(url)
 
-        # 주소 파싱
-        soup = self._parse(url)
+        while True:
+            try:
+                # 주소 파싱
+                soup = self._parse(url)
+                # 타이틀 추출 및 폴더 생성
+                folder = self.get_title(soup)
+                break
+            except Exception as e:
+                print(e)
+                time.sleep(3)
+                print('Try again...')
 
-        # 타이틀 추출 및 폴더 생성
-        folder = self.get_title(soup)
         if folder:
             self.crome_download(url, folder)
             self.delete_file(folder)
