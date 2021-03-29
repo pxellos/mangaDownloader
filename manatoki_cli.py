@@ -3,6 +3,7 @@ import re
 import time
 import importlib
 from urllib import request
+import urllib
 from bs4 import BeautifulSoup
 from concurrent import futures
 from selenium import webdriver
@@ -27,7 +28,11 @@ class CreateRequests:
 
     def get(self, url):
         requests = importlib.import_module('requests')
-        return requests.get(url)
+        # headers = {'Content-Type': 'application/json; charset=utf-8'}
+        headers = {'User-Agent': 'Mozilla/6.0'}
+        # cookies = {'session_id': 'sorryidontcare'}
+
+        return requests.get(url, headers=headers)
 
 
 class Downloader():
@@ -613,9 +618,18 @@ class Downloader():
         # 전체 리스트 중 1페이지 파싱
         url = 'https://manatoki.net'
         get_obj = CreateRequests()
+
         res = get_obj.get(url)
         # page = res.url + 'comic/p1'
-        page = res.url + 'bbs/page.php?hid=update&page=1'
+        print(res.status_code)
+        # 기본 웹서버 다운에러
+        if res.status_code == 521 or 523:
+            print('마나토끼 주소 번호를 입력하시오.')
+            cli_input = input()
+            # page = 'https://manatoki'+ cli_input + '.net/bbs/page.php?hid=update&page=1'
+            page = 'https://manatoki' + cli_input + '.net/page/update'
+        else:
+            page = res.url + 'bbs/page.php?hid=update&page=1'
 
         link_set = None
 
@@ -706,6 +720,7 @@ def main():
                     print("한 페이지 만화 다운로드를 시작합니다.")
                     print("다운받을 페이지 주소를 입력하세요.")
                     TOTAL_DOWNLOAD = False
+                    ONE_DOWNLOAD = True
                     cli_input = input()
                     obj.three_main(cli_input)
                     print("한 페이지 만화 다운로드가 완료되었습니다.")
