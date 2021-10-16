@@ -2,8 +2,8 @@ import os
 import re
 import time
 import importlib
+import ssl
 from urllib import request
-import urllib
 from bs4 import BeautifulSoup
 from concurrent import futures
 from selenium import webdriver
@@ -215,7 +215,9 @@ class Downloader():
     def _parse(self, url):
         req_url = request.Request(url, headers={'User-Agent': 'Mozilla/6.0'})
         # req_url = request.Request(url, headers={'User-Agent': 'Edg/87.0.664.47'})
-        response = request.urlopen(req_url)
+        # 개정된 PEP 467에 따라 모든 https 통신은 필요한 인증서와 호스트명을 기본으로 체크
+        context = ssl._create_unverified_context()
+        response = request.urlopen(req_url,  context=context)
         html = response.read()
         soup = BeautifulSoup(html, 'html.parser')
 
