@@ -7,6 +7,7 @@ from requests import get
 from concurrent import futures
 from selenium import webdriver
 # from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
 
 # 최대 프로세스 개수
 MAX_PROCESS = 10
@@ -16,7 +17,7 @@ MAX_THREAD = 3
 CURRENT_PATH = os.getcwd()
 # 지정 경로
 global SELLECT_PATH
-SELLECT_PATH = 'D:\\Manatoki'
+SELLECT_PATH = 'D:\\Hitomi_jmana'
 # SELLECT_PATH = CURRENT_PATH
 # 비밀번호
 global PASSWORD
@@ -49,7 +50,7 @@ class Downloader():
         options = webdriver.ChromeOptions()
         options.add_argument('headless')
         options.add_argument('window-size=800x600')
-        options.add_argument("disable-gpu")
+        # options.add_argument("disable-gpu")
 
         # UserAgent값 변경(비정상 접속차단 회피)
         options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
@@ -66,15 +67,18 @@ class Downloader():
 
         # 패스워드를 입력
         # driver.find_element_by_tag_name('input').send_keys('1111')
-        driver.find_element_by_xpath(
-            "//input[@type='password']").send_keys(PASSWORD)
+        # driver.find_element_by_xpath(
+        #     "//input[@type='password']").send_keys(PASSWORD)
+        driver.find_element(By.XPATH, "//input[@type='password']").send_keys(PASSWORD)
 
         # 확인 버튼을 클릭, 경로가 다른경우가 있어서 예외처리로 수행
         try:
-            driver.find_element_by_xpath('//button[@type="submit"]').click()
+            # driver.find_element_by_xpath('//button[@type="submit"]').click()
+            driver.find_element(By.XPATH, "//button[@type='submit']").click()
         except Exception:
             submit_path = '/html/body/div/div/main/div/div/div/div/div/form/button[@type="submit"]'
-            driver.find_element_by_xpath(submit_path).click()
+            # driver.find_element_by_xpath(submit_path).click()
+            driver.find_element(By.XPATH, submit_path).click()
 
         # 패스워드 입력후 글이 보여지면 정보 취득
         html = driver.page_source

@@ -1,0 +1,48 @@
+# 기본
+
+1. 웹에서 제공하는 본문 이미지 다운로드 기능 이용
+  - 이미지 다운로드에 연결된 링크 주소를 사용해도 될듯? -> php 기능을 써서 하는거라 안되는듯?
+  - 일부 밖에 이미지가 안들어 있어서 본문 이미지 링크를 따서 다운로드 하는 것으로 변경
+  - 웹드라이버에서 다운로드 하는 것으로 처리 -> 그냥 request 로 하면 세션 문제인지 접근금지 됨
+
+2. 크롬웹드라이버 사용
+
+3. 이미지 다운로드 경로 및 폴더는 변경 어려울듯
+  - 다운로드 폴더 변경 가능 -> 타이틀로 폴더 생성해서 변경
+  - 파일명이 중복되서 순서가 안맞는 경우가 있어서 다운 받은 순서대로 파일명 변경함
+  - 50kb 이하 이미지는 삭제 처리
+
+# 프로세스
+
+1. 본문 내에 링크 주소 파싱
+  - 링크 주소 및 제목 dict 에 저장 -> 매번 하는게 아니라 그냥 주소 따와서 list 에 수동 입력
+
+2. 다운로드 폴더 안에 파일명 변경 및 폴더 이동
+  - 폴더명을 제목으로 생성
+  - 해당 폴더에 저장 후 파일명 다운로드 순서대로 변경 000n.extend
+
+
+# 태권더박 링크
+
+"https://gall.dcinside.com/board/view?id=comic_new1&no=5097968",
+"https://gall.dcinside.com/board/view/?id=comic_new3&no=10506733&s_type=search_subject_memo&s_keyword=.ED.83.9C.EA.B6.8C&page=1",
+"https://arca.live/b/lastorigin/8305241",
+"https://gall.dcinside.com/board/view/?id=comic_new3&no=10497971&s_type=search_subject_memo&s_keyword=.ED.83.9C.EA.B6.8C&page=1",
+"https://gall.dcinside.com/board/view/?id=comic_new3&no=10497981&s_type=search_subject_memo&s_keyword=.ED.83.9C.EA.B6.8C&page=1",
+"https://gall.dcinside.com/board/view/?id=comic_new3&no=10507030&exception_mode=recommend&page=1",
+"https://gall.dcinside.com/board/view/?id=comic_new3&no=10507987&search_pos=-10456399&s_type=search_subject_memo&s_keyword=.ED.83.9C.EA.B6.8C&page=1",
+"https://gall.dcinside.com/board/view/?id=comic_new3&no=10524667&exception_mode=recommend&page=1",
+"https://gall.dcinside.com/board/view/?id=comic_new3&no=10545378&exception_mode=recommend&page=1",
+"https://gall.dcinside.com/board/view/?id=comic_new3&no=10545874&search_pos=-10496570&s_type=search_subject_memo&s_keyword=.ED.83.9C.EA.B6.8C&page=1",
+"https://gall.dcinside.com/board/view/?id=comic_new3&no=10565113&exception_mode=recommend&page=1",
+"https://gall.dcinside.com/board/view?id=comic_new3&no=5244830",
+"https://gall.dcinside.com/board/view?id=comic_new3&no=9163119",
+"https://gall.dcinside.com/board/view?id=comic_new3&no=10463423",
+"https://gall.dcinside.com/board/view/?id=comic_new3&no=10471702&page=1",
+"https://gall.dcinside.com/board/view/?id=comic_new3&no=10491556&exception_mode=recommend&page=1",
+"https://gall.dcinside.com/board/view?id=comic_new3&no=10412613",
+"https://gall.dcinside.com/board/view?id=comic_new3&no=10427934",
+"https://gall.dcinside.com/board/view?id=comic_new3&no=10433635",
+"https://gall.dcinside.com/board/view?id=comic_new3&no=10446510",
+"https://gall.dcinside.com/board/view?id=comic_new3&no=5632834",
+ style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>49화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=5632837" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>50화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=5632838" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>51화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=5632839" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>52화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=5632840" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>53화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=5632842" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>54화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=5632846" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>55화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=5632848" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>56화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=5632851" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>57화</a></p><p style="border:0px;vertical-align:baseline;color:rgb(51,51,51);font-family:'-apple-system', BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', arial, '굴림', Gulim, sans-serif;font-size:13px;"><br></p><p style="border:0px;vertical-align:baseline;color:rgb(51,51,51);font-family:'-apple-system', BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', arial, '굴림', Gulim, sans-serif;font-size:13px;"><a class='lnk' href="https://gall.dcinside.com/board/view/?id=comic_new3&no=10161889&page=1" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>58화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=10161892" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>59화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=10161894" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>60화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=10161896" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>61화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=10161898" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>62화</a> <a class='lnk' href="https://gall.dcinside.com/board/view/?id=comic_new3&no=10400339&page=1#focus_cmt" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>63화</a> <a class='lnk' href="https://gall.dcinside.com/board/view/?id=comic_new3&no=10400340&page=1" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>64화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=10400341" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>65화</a></p><p style="border:0px;vertical-align:baseline;color:rgb(51,51,51);font-family:'-apple-system', BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', arial, '굴림', Gulim, sans-serif;font-size:13px;"><br></p><p style="border:0px;vertical-align:baseline;color:rgb(51,51,51);font-family:'-apple-system', BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', arial, '굴림', Gulim, sans-serif;font-size:13px;"><b style="margin:0px;padding:0px;border:0px;vertical-align:baseline;">외전</b></p><p style="border:0px;vertical-align:baseline;color:rgb(51,51,51);font-family:'-apple-system', BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', arial, '굴림', Gulim, sans-serif;font-size:13px;"><br></p><p style="border:0px;vertical-align:baseline;color:rgb(51,51,51);font-family:'-apple-system', BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', arial, '굴림', Gulim, sans-serif;font-size:13px;"><a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=10317325" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>4화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=10331943" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>5화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=10369421" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>6화</a> <a class='lnk' href="https://gall.dcinside.com/board/view?id=comic_new3&no=10394631" style="color:rgb(0,102,204);border:0px;margin:0px;padding:0px;vertical-align:baseline;" target='_blank'>7화</a></p><p style="border:0px;vertical-align:baseline;color:rgb(51,51,51);font-family:'-apple-system', BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', arial, '굴림', Gulim, sans-serif;font-size:13px;"><br></p><p style="border:0px;vertical-align:baseline;color:rgb(51,51,51);font-family:'-apple-system', BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', arial, '굴림', Gulim, sans-serif;font-size:13px;"><br></p><p style="border:0px;vertical-align:baseline;color:rgb(51,51,51);font-family:'-apple-system', BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', arial, '굴림', Gulim, sans-serif;font-size:13px;"><span style="background-color:rgb(255,255,255);color:rgb(32,33,34);font-family:'-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, Helvetica, Arial, sans-serif;font-size:13.3333px;">※ </span>최대 글자수를 초과해버려서 링크 글을 따로 파게 되었음</p>	
