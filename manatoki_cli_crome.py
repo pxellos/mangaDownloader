@@ -6,7 +6,14 @@ import ssl
 from urllib import request
 from bs4 import BeautifulSoup
 from concurrent import futures
-# from selenium import webdriver
+from selenium import webdriver
+
+'''
+캡차 때문에 개선 필요점
+1. 크롬을 보이게 띄우고 1회 캡차 통과는 수동으로
+2. 캡차 로그인 한 프로세서로 이후 작업 수행
+  - 멀티 프로세스는 안되고 멀티 스레드만 사용
+'''
 
 # 최대 프로세스 개수
 MAX_PROCESS = 5
@@ -29,19 +36,11 @@ class CreateRequests:
     def get(self, url):
         requests = importlib.import_module('requests')
         # headers = {'Content-Type': 'application/json; charset=utf-8'}
-        # headers = {'User-Agent': 'Mozilla/6.0'}
+        headers = {'User-Agent': 'Mozilla/6.0'}
         # cookies = {'session_id': 'sorryidontcare'}
-        # cookies = {'PHPSESSID': 'l0905rqnlm3mp7fm3077kgmotgec6'}
-        chrome_session_cookie = {'name': 'SESSION_COOKIE_NAME',
-                                 'value': 'SESSION_COOKIE_VALUE',
-                                 'domain': 'SESSION_COOKIE_DOMAIN'}
-        # requests 모듈 세션 생성
-        session = requests.Session()
+        cookies = {'PHPSESSID': 'l0905rqnlm3mp7fm3077kgmotgec6'}
 
-        # 세션에 쿠키 추가
-        session.cookies.set(**chrome_session_cookie)
-
-        return session.get(url)
+        return requests.get(url, headers=headers, cookies=cookies)
 
 
 class Downloader():
